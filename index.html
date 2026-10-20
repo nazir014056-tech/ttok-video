@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#101014">
+<title>Ttok Video</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#08080b;color:white;font-family:Arial,sans-serif}
+.app{max-width:600px;margin:auto;height:100dvh;position:relative;overflow:hidden;background:#111}
+header{position:absolute;z-index:5;top:0;width:100%;padding:16px;text-align:center;background:linear-gradient(#0009,transparent);font-weight:bold}
+.logo{position:absolute;left:12px;top:15px;font-size:14px}
+.logo b{color:#25f4ee}
+.tabs{display:flex;justify-content:center;gap:22px}
+.tabs span{cursor:pointer;color:#bbb}
+.tabs .active{color:white;border-bottom:2px solid white;padding-bottom:5px}
+.feed{height:100%;overflow-y:auto;scroll-snap-type:y mandatory}
+.video{height:100%;height:100dvh;position:relative;scroll-snap-align:start;background:#202028}
+.video video{width:100%;height:100%;object-fit:cover}
+.shade{position:absolute;inset:0;background:linear-gradient(transparent 45%,#000b)}
+.caption{position:absolute;bottom:95px;left:14px;right:80px;text-shadow:0 1px 4px black;font-size:14px}
+.caption strong{display:block;margin-bottom:8px}
+.actions{position:absolute;right:12px;bottom:105px;display:flex;flex-direction:column;gap:18px;align-items:center}
+.action{background:none;color:white;display:flex;flex-direction:column;align-items:center;gap:4px;font-size:12px}
+.circle{width:45px;height:45px;border-radius:50%;background:#ffffff30;display:grid;place-items:center;font-size:23px}
+.liked .circle{color:#fe2c55}
+.avatar{width:43px;height:43px;border-radius:50%;background:linear-gradient(135deg,#fe2c55,#673cff);display:grid;place-items:center;font-size:20px;font-weight:bold;border:2px solid white}
+nav{position:absolute;z-index:10;bottom:0;left:0;right:0;background:#09090cf5;display:flex;justify-content:space-around;padding:10px 2px 15px;border-top:1px solid #333}
+nav button{background:none;color:#ddd;font-size:11px;display:flex;flex-direction:column;align-items:center;gap:5px}
+nav .ico{font-size:23px}
+nav .plus{background:white;color:#111;font-size:25px;border-radius:7px;padding:0 12px}
+.screen{display:none;position:absolute;z-index:7;inset:0;background:#101014;padding:55px 16px 90px;overflow:auto}
+.screen.show{display:block}
+.screen h2{margin-top:0}
+.field{width:100%;padding:13px;border-radius:10px;border:1px solid #444;background:#24242c;color:white;margin:7px 0 14px}
+.btn{width:100%;padding:13px;background:#fe2c55;color:white;border:0;border-radius:10px;font-weight:bold;margin:5px 0}
+.secondary{padding:10px;background:#30303a;color:white;border:0;border-radius:8px}
+.close{float:right;border:0;border-radius:50%;padding:9px;background:#333;color:white}
+.muted{font-size:13px;color:#bbb;line-height:1.5}
+.row{display:flex;gap:8px}
+.row .field{flex:1;min-width:0}
+.stats{display:flex;justify-content:center;gap:28px;text-align:center;margin:20px}
+.stats b{display:block;font-size:20px}
+.stats span{font-size:12px;color:#aaa}
+.pavatar{margin:15px auto;width:80px;height:80px;border-radius:50%;display:grid;place-items:center;background:#fe2c55;font-size:32px}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:3px}
+.grid video{width:100%;aspect-ratio:3/4;object-fit:cover}
+.comment{padding:10px 0;border-bottom:1px solid #333}
+</style>
+</head>
+<body>
+<div class="app">
+<header>
+  <div class="logo">TTOK <b>VIDEO</b></div>
+  <div class="tabs">
+    <span id="followingTab" onclick="setFeed('following')">Following</span>
+    <span id="forYouTab" class="active" onclick="setFeed('all')">For You</span>
+  </div>
+</header>
+
+<main id="feed" class="feed"></main>
+
+<section id="searchScreen" class="screen">
+  <button class="close" onclick="show('feed')">✕</button>
+  <h2>ভিডিও খুঁজুন</h2>
+  <div class="row">
+    <input id="searchText" class="field" placeholder="নাম বা হ্যাশট্যাগ লিখুন">
+    <button class="secondary" onclick="searchVideos()">খুঁজুন</button>
+  </div>
+  <div id="searchResults"></div>
+</section>
+
+<section id="uploadScreen" class="screen">
+  <button class="close" onclick="show('feed')">✕</button>
+  <h2>ভিডিও আপলোড</h2>
+  <label>মোবাইল থেকে ভিডিও বাছাই করো</label>
+  <input id="videoFile" class="field" type="file" accept="video/*">
+  <label>ক্যাপশন</label>
+  <textarea id="captionInput" class="field" rows="3" placeholder="ভিডিও সম্পর্কে লিখুন"></textarea>
+  <button class="btn" onclick="uploadVideo()">ভিডিও যোগ করুন</button>
+  <p class="muted">এটি প্রাথমিক ডেমো। আপলোড করা ভিডিও এই ব্রাউজারেই থাকবে; এখনো অনলাইন সার্ভারে যাবে না।</p>
+  <p id="uploadMessage" class="muted"></p>
+</section>
+
+<section id="inboxScreen" class="screen">
+  <button class="close" onclick="show('feed')">✕</button>
+  <h2>ইনবক্স</h2>
+  <p class="muted">অনলাইন নোটিফিকেশন পরের ধাপে যুক্ত করা হবে।</p>
+</section>
+
+<section id="profileScreen" class="screen">
+  <button class="close" onclick="show('feed')">✕</button>
+  <h2>প্রোফাইল</h2>
+  <div class="pavatar" id="profileAvatar">T</div>
+  <input id="nameInput" class="field" value="Ttok Creator" placeholder="তোমার নাম">
+  <input id="bioInput" class="field" placeholder="নিজের সম্পর্কে লিখুন">
+  <button class="btn" onclick="saveProfile()">প্রোফাইল সেভ</button>
+  <div class="stats">
+    <div><b id="postCount">0</b><span>ভিডিও</span></div>
+    <div><b id="likeCount">0</b><span>লাইক</span></div>
+    <div><b id="followCount">0</b><span>ফলো</span></div>
+  </div>
+  <h3>আমার ভিডিও</h3>
+  <div id="myVideos" class="grid"></div>
+</section>
+
+<section id="settingsScreen" class="screen">
+  <button class="close" onclick="show('feed')">✕</button>
+  <h2>সেটিংস</h2>
+  <label>ভাষা নির্বাচন</label>
+  <select id="language" class="field" onchange="changeLanguage()">
+    <option value="bn">বাংলা</option>
+    <option value="en">English</option>
+    <option value="hi">हिन्दी</option>
+    <option value="ar">العربية</option>
+    <option value="ur">اردو</option>
+    <option value="es">Español</option>
+    <option value="fr">Français</option>
+    <option value="pt">Português</option>
+  </select>
+  <p class="muted">Ttok Video v1.0</p>
+  <p class="muted">এটি প্রাথমিক সংস্করণ। লগইন, অনলাইন ডেটাবেস, নিরাপদ ভিডিও স্টোরেজ এবং নোটিফিকেশন পরে যুক্ত করতে হবে।</p>
+</section>
+
+<section id="commentsScreen" class="screen">
+  <button class="close" onclick="show('feed')">✕</button>
+  <h2>কমেন্ট</h2>
+  <div id="commentList"></div>
+  <input id="commentText" class="field" placeholder="কমেন্ট লিখুন">
+  <button class="btn" onclick="addComment()">কমেন্ট পাঠান</button>
+</section>
+
+<nav>
+  <button onclick="show('feed')"><span class="ico">⌂</span>হোম</button>
+  <button onclick="show('searchScreen')"><span class="ico">⌕</span>খুঁজুন</button>
+  <button onclick="show('uploadScreen')"><span class="ico plus">+</span>তৈরি</button>
+  <button onclick="show('inboxScreen')"><span class="ico">♡</span>ইনবক্স</button>
+  <button onclick="show('profileScreen')"><span class="ico">◉</span>প্রোফাইল</button>
+  <button onclick="show('settingsScreen')"><span class="ico">⚙</span>সেটিংস</button>
+</nav>
+</div>
+
+<script>
+const samples=[
+{id:1,user:"Ttok Nature",caption:"প্রকৃতির সুন্দর মুহূর্ত 🌿 #nature",src:"https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4",likes:128,liked:false,followed:false,comments:[],local:false},
+{id:2,user:"Creative World",caption:"আনন্দময় মুহূর্ত ✨ #creative",src:"https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoyrides.mp4",likes:86,liked:false,followed:false,comments:[],local:false},
+{id:3,user:"Ttok Travel",caption:"নতুন জায়গা, নতুন অভিজ্ঞতা 🌍 #travel",src:"https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4",likes:245,liked:false,followed:false,comments:[],local:false}
+];
+let videos=[...samples],nextId=4,mode="all",commentId=null,userName="Ttok Creator";
+const $=id=>document.getElementById(id);
+function safe(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function render(){
+ const list=mode==="following"?videos.filter(v=>v.followed):videos;
+ $("feed").innerHTML=list.length?list.map(v=>`
+ <article class="video" data-id="${v.id}">
+ <video src="${safe(v.src)}" loop muted playsinline autoplay controls></video>
+ <div class="shade"></div>
+ <div class="caption"><strong>@${safe(v.user)}</strong>${safe(v.caption)}<p>♪ Original sound · Ttok Video</p></div>
+ <div class="actions">
+ <button class="action" onclick="follow(${v.id})"><span class="avatar">${safe(v.user[0]||'T')}</span><span>${v.followed?'Following':'+ Follow'}</span></button>
+ <button class="action ${v.liked?'liked':''}" onclick="like(${v.id})"><span class="circle">♥</span><span>${v.likes}</span></button>
+ <button class="action" onclick="openComments(${v.id})"><span class="circle">▢</span><span>${v.comments.length}</span></button>
+ <button class="action" onclick="share(${v.id})"><span class="circle">➤</span><span>Share</span></button>
+ </div></article>`).join(''):'<p style="padding:25px">এই ফিডে ভিডিও নেই। For You নির্বাচন করো।</p>';
+ $("feed").querySelectorAll("video").forEach(v=>v.addEventListener("play",()=>{$("feed").querySelectorAll("video").forEach(o=>{if(o!==v)o.pause()})}));
+}
+function setFeed(m){mode=m;$("followingTab").classList.toggle("active",m==="following");$("forYouTab").classList.toggle("active",m==="all");render()}
+function show(id){document.querySelectorAll(".screen").forEach(s=>s.classList.remove("show"));if(id!=="feed")$(id).classList.add("show");if(id==="profileScreen")renderProfile()}
+function like(id){let v=videos.find(x=>x.id===id);v.liked=!v.liked;v.likes+=v.liked?1:-1;render()}
+function follow(id){let v=videos.find(x=>x.id===id);v.followed=!v.followed;render()}
+function openComments(id){commentId=id;let v=videos.find(x=>x.id===id);$("commentList").innerHTML=v.comments.length?v.comments.map(c=>`<div class="comment">${safe(c)}</div>`).join(""):'<p class="muted">এখনো কোনো কমেন্ট নেই।</p>';$("commentText").value="";show("commentsScreen")}
+function addComment(){let t=$("commentText").value.trim();if(!t)return;videos.find(x=>x.id===commentId).comments.push(t);openComments(commentId)}
+async function share(id){let v=videos.find(x=>x.id===id);try{if(navigator.share)await navigator.share({title:"Ttok Video",text:v.caption,url:location.href});else{await navigator.clipboard.writeText(v.caption);alert("ক্যাপশন কপি হয়েছে")}}catch(e){}}
+function searchVideos(){let q=$("searchText").value.toLowerCase();let a=videos.filter(v=>(v.user+" "+v.caption).toLowerCase().includes(q));$("searchResults").innerHTML=a.length?a.map(v=>`<div class="comment"><b>@${safe(v.user)}</b><p>${safe(v.caption)}</p><button class="secondary" onclick="show('feed');document.querySelector('[data-id=&quot;${v.id}&quot;]')?.scrollIntoView()">ভিডিও দেখুন</button></div>`).join(""):'কোনো ভিডিও পাওয়া যায়নি।'}
+function uploadVideo(){
+ const file=$("videoFile").files[0];if(!file){$("uploadMessage").textContent="আগে একটি ভিডিও নির্বাচন করো।";return}
+ if(!file.type.startsWith("video/")){$("uploadMessage").textContent="ভিডিও ফাইল নির্বাচন করো।";return}
+ const src=URL.createObjectURL(file),caption=$("captionInput").value.trim();
+ videos.unshift({id:nextId++,user:userName,caption:caption||"আমার নতুন ভিডিও #ttokvideo",src,likes:0,liked:false,followed:true,comments:[],local:true});
+ $("uploadMessage").textContent="ভিডিওটি এই ব্রাউজারের ডেমো ফিডে যোগ হয়েছে।";
+ $("videoFile").value="";$("captionInput").value="";mode="all";render();setTimeout(()=>show("feed"),500)
+}
+function saveProfile(){userName=$("nameInput").value.trim()||"Ttok Creator";$("profileAvatar").textContent=userName[0].toUpperCase();renderProfile();alert("প্রোফাইল আপডেট হয়েছে।")}
+function renderProfile(){const mine=videos.filter(v=>v.local);$("postCount").textContent=mine.length;$("likeCount").textContent=mine.reduce((n,v)=>n+v.likes,0);$("followCount").textContent=videos.filter(v=>v.followed).length;$("myVideos").innerHTML=mine.map(v=>`<video src="${safe(v.src)}" controls muted></video>`).join("")||'<p class="muted">এখনো ভিডিও আপলোড করোনি।</p>'}
+const words={
+bn:["হোম","খুঁজুন","তৈরি","ইনবক্স","প্রোফাইল"],
+en:["Home","Search","Create","Inbox","Profile"],
+hi:["होम","खोजें","बनाएँ","इनबॉक्स","प्रोफ़ाइल"],
+ar:["الرئيسية","بحث","إنشاء","الوارد","الملف الشخصي"],
+ur:["ہوم","تلاش","بنائیں","ان باکس","پروفائل"],
+es:["Inicio","Buscar","Crear","Bandeja","Perfil"],
+fr:["Accueil","Rechercher","Créer","Boîte","Profil"],
+pt:["Início","Buscar","Criar","Caixa","Perfil"]
+};
+function changeLanguage(){let lang=$("language").value;document.querySelectorAll("nav button").forEach((b,i)=>{if(words[lang])b.lastChild.textContent=words[lang][i]||b.lastChild.textContent})}
+render();
+</script>
+</body>
+  </html>
